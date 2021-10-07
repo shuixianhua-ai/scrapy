@@ -1,0 +1,89 @@
+1. 新建 （先找到scrapy文件）
+conda activate spider
+scrapy startproject name 
+2. 创建目标文件
+cd name（转到爬虫文件内部）
+scrapy genspider basic basic.cn
+3. 启动爬虫
+scrapy crawl basic
+
+问题：
+1. pycharm中import scrapy 报错：重新设置interpret，注意正确的虚拟环境的选择
+2. 在setting。py中设置LOG_LEVEL="WARNING"，减少不必要的输出
+3.最开始
+ html = response.text
+        news_list = response.xpath("//div[@class='index_class_focus']/div[@class='index_class_wrap clearfix']/div[@class='content_right']/div[@class='index_righttab_module padding_top_20']/div[@class='new_rank_list red_border']/div[@class='publish_seller_list']/div[@class='list_content ']/div[@class='nopic red_bg']")
+        
+4. 关于span中文字
+news.xpath(".//div[@class='book_content clearfix']/div[@class='info']/div[@class='price_inuse']/span/text()").extract_first()
+注意：在text()后面需要增加.extract()来提取文字(一般用extract_first()来提取第一个值，取不到就为None)
+ 5.注意：//div[@class='a']//h3  如果下面有多个h3，则全部输出
+其中//指中间跳过多个，/表示两者是严格上下的关系，只要没有异议性，一般用//较为方便
+
+6. 在循环前面的那个（如上面的news_list）一定要取到最里面的相同的（分组）
+7.item={}
+item["name"]=
+item["title"]=
+print(item)
+
+8. yield item  （在basic中，for循环下面，将item返回到pipline中）要使用pipline需要在settings中将pipline语句开启，并且在pipline中print(item)才有用
+9. 如果需要处理，可以在pipline中新建一个类，然后再setting中相应位置添加这个类，最后一项数字大小可以控制哪个类先运行
+10.为了能使各个item能再不同类中运行，一定要拥有return
+11. 一个项目可存在多个爬虫
+12. 判断item来自哪个爬虫？在爬虫代码中item添加“from”属性，在pipline中用
+if item["from"]=="a":
+...
+elseif item["from"]=="b":
+...
+   
+
+或者用
+if spider.name=="itcast":
+...
+elseif   spider.name=="itcast2":       
+...
+
+13. import logging（注意在setting设置）LOG_LEVEL=“WARNING”
+logging.warning(item)(因为print太麻烦了，而且崩溃后就没了，所以用warning代替print，将内容保存到本地的日志)
+或者用
+logger=logging.getlogger(__name__)
+logger.warning(item)  这个会把item来自哪个py显示除来（来自pipline，在pipiline中没法显示来自哪个爬虫）
+14. 在setting中添加LOG_FILE="./log.log"会在根目录下保存日志
+
+15. 提取特定的内容（分组中提取）
+主要tbody不能写！
+xpath(//table[@class='t1']/tr)[1:-1]  #这里指从第二个到倒数第二个
+
+16. 翻页
+在for同等级的地方写
+next_url=response.xpath("//a[@id='next']/@href").extra_first()
+if next_url !="javascript":
+   next_url="网页源地址"+next_url
+   yield scrapy.Request(
+            next_url,
+            callback=self,parse   #像递归，如果下一页的操作不同，需要构建另一个
+           #如果列表列和详情页综合处理，则需要将列表列中的item传递到详情页的操作方法中
+           可以用meta={"item":item}
+           )
+针对上面meta，在新的def parse1（self，response）
+中添加response.meta["item"]
+
+17. 当然，在basic中的item可以用setting中
+name=scrapy.Field(),
+在basic中导入类：from projectname.items import classname
+item=classname()  //实例化
+
+18. 关于title取法（在a里面的）
+name=tr.xpath("./div/a/@title").extra_first()
+
+19.在列表页与详情页中，详情页存在不同结构，但有共同点，如内容都在div class=“a”下面，则可以xpath（"//div[@class='a']//text()"）.extract()
+20. 如果出现网页链接不完整的，可以
+item["href"]=["http://aa.com"+i for i in item["href"]]
+
+
+##yield scrapy.Request(
+             #   item["href"],
+              #  callback=self.parse_con,
+               # meta={"item": item},
+                #dont_filter=True
+            #)

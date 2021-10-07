@@ -1,0 +1,10 @@
+purl = response.xpath(
+            "//div[@class='result']/table//div[@class='pagebox']/a[@title='下一页']/@href").extract_first()
+        next_url = ['https://search.sina.com.cn/' + purl]
+        print(purl)
+        if self.pageNum < 4:
+            self.pageNum = self.pageNum + 1
+            url = format(self.url % self.pageNum)
+            yield scrapy.Request(url=url, callback=self.parse)
+pageNum = 1
+    url =['https://search.sina.com.cn/?q=%e6%96%b0%e5%86%a0&c=news&from=channel&col=&range=all&source=&country=&size=10&stime=&etime=&time=&dpc=0&a=&ps=0&pf=0&page=%s']
